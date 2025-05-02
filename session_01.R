@@ -3,10 +3,10 @@ text <- c("Because I could not stop for Death -",
           "The Carriage held but just Ourselves -",
           "and Immortality")
 
-# tokenize
+text
 
+# tokenize
 library(dplyr)
-# install.packages("tidytext")
 library(tidytext)
 
 # token = poet's line
@@ -31,8 +31,8 @@ text |>
                 input = value) # name your arguments
 
 # 1.3 example with stopwords
-install.packages("janeaustenr")
-install.packages("stringr")
+# install.packages("janeaustenr")
+# install.packages("stringr")
 library(janeaustenr)
 library(stringr)
 

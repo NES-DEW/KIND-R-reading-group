@@ -21,7 +21,87 @@ bench::mark(
   anti_join = tokenised |>  
   anti_join(stop_words, by = c("tokens" = "word")))
 
-# prince lyrics ----
+# sentiment analysis
 
-# there is this interesting lyrics analysis of the artist Prince to see if he had higher frequency of certain words in lyrics of songs before his death 
-# https://www.datacamp.com/tutorial/R-nlp-machine-learning
+
+library(tidytext)
+
+afinn <- get_sentiments("afinn")
+
+afinn
+
+# afinn |>
+#   readr::write_rds("afinn.rds")
+# 
+# afinn <- readr::read_rds("afinn.rds")
+
+tibble(text = janeaustenr::sensesensibility) |> 
+  unnest_tokens(output = "word", input = "text") |>
+  anti_join(stop_words, by = join_by(word == word)) |>
+  inner_join(afinn) |>
+  count(word, wt = value) |>
+  slice_max(n = 20, abs(n))
+
+tibble(text = janeaustenr::sensesensibility) |> 
+  unnest_tokens(output = "word", input = "text") |>
+  anti_join(stop_words, by = join_by(word == word)) |>
+  filter(word == "swoon")
+
+sentisense<- tibble(text = janeaustenr::sensesensibility) |> 
+  unnest_tokens(output = "word", input = "text") |>
+  anti_join(stop_words, by = join_by(word == word)) |>
+  inner_join(afinn) %>% group_by(word, value) %>% summarise(count = n()) %>% 
+  mutate(weight = value * count)
+
+tibble(text = janeaustenr::sensesensibility) |> 
+  unnest_tokens(output = "word", input = "text") |>
+  anti_join(stop_words, by = join_by(word == word)) |>
+  inner_join(afinn) |>
+  group_by(word) |> 
+  summarise(n = n(), value = first(value)) |> 
+  ungroup()
+
+# non-word sentiments
+bingnegative <- get_sentiments("bing") |>
+  filter(sentiment == "negative") |>
+  pull(word)
+
+tibble(text = janeaustenr::sensesensibility) |> 
+  unnest_tokens(token = "ngrams", output = "word", input = "text") |>
+  tidyr::drop_na() ## much more complicated!
+
+
+## chapter sentiments, pulled from the book
+tidy_books <- austen_books() %>%
+  group_by(book) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) %>%
+  ungroup() %>%
+  unnest_tokens(word, text)
+
+bingnegative <- get_sentiments("bing") %>% # negative words
+  filter(sentiment == "negative")
+
+wordcounts <- tidy_books %>% # chapter word counts
+  group_by(book, chapter) %>%
+  summarize(words = n())
+
+chapter_sentiments <- tidy_books %>% # ratio of neg words per chapter
+  semi_join(bingnegative) %>%
+  group_by(book, chapter) %>%
+  summarize(negativewords = n()) %>%
+  left_join(wordcounts, by = c("book", "chapter")) %>%
+  mutate(ratio = negativewords/words) %>%
+  filter(chapter != 0) 
+
+chapter_sentiments |> # plotting
+  ungroup() |>
+  ggplot() +
+  geom_line(aes(x = chapter, y = ratio, group = book)) +
+  facet_wrap(~book, scales = "free", ncol = 2)
+
+
+
