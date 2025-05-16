@@ -1,8 +1,9 @@
-# session_02.R = plans
+# session 02 bits and pieces
+library(tidyverse)
+library(tidytext)
+library(gutenbergr)
 
 # word freqs and gutenbergr ----
-
-library(gutenbergr)
 hgwells <- gutenberg_download(
   c(35, 36, 5230, 159),
   mirror = "https://gutenberg.pglaf.org/"
@@ -11,7 +12,6 @@ hgwells <- gutenberg_download(
 # filter vs anti-join for stop word performance ----
 # install.packages("bench")
 library(bench)
-
 tokenised <- tibble(text = janeaustenr::sensesensibility) |> 
   unnest_tokens(output = "tokens", input = "text") 
 
@@ -22,10 +22,6 @@ bench::mark(
   anti_join(stop_words, by = c("tokens" = "word")))
 
 # sentiment analysis
-
-
-library(tidytext)
-
 afinn <- get_sentiments("afinn")
 
 afinn
@@ -103,5 +99,29 @@ chapter_sentiments |> # plotting
   geom_line(aes(x = chapter, y = ratio, group = book)) +
   facet_wrap(~book, scales = "free", ncol = 2)
 
+# more developed sentiment analysis across Jane Austen's books, thanks to James Kilgour from PHS
 
+lexicon = c("bing", "loughran", "nrc")
+
+sentiment_comparison <- function(x){
+  
+  data <- tidy_books %>%
+    inner_join(get_sentiments(x)) %>%
+    count(book, index = linenumber %/% 80, sentiment) %>%
+    pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+    mutate(sentiment = positive - negative)
+  
+  
+  plot <- ggplot(data, aes(index, sentiment, fill = book, colour = book)) +
+    geom_hline(yintercept = 0, colour = "black") + # Null sentiment intercept
+    geom_point(show.legend = FALSE, alpha = 0.5, size = 0.5) +
+    geom_smooth(show.legend = FALSE) + # Loess to show localised chage throughout book
+    labs(title = paste0("Sentiment source: ", x)) +
+    facet_wrap(~book, ncol = 2, scales = "free_x")
+  
+  print(plot)
+  
+}
+
+cowplot::plot_grid(plotlist = map(lexicon, sentiment_comparison), nrow = 1)
 
