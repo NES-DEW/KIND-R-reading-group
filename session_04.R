@@ -1,3 +1,5 @@
+# this session was about the first part of chapter 4: tokenising to n-word chunks (n-grams)
+
 library(tidyverse)
 library(tidytext)
 library(janeaustenr)
