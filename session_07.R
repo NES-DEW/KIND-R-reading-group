@@ -6,6 +6,7 @@
 library(tm)
 library(tidytext)
 library(tidyverse)
+library(Matrix)
 
 # corpus ----
 
@@ -17,16 +18,22 @@ acq[[1]]
 
 acq[[1]]$meta
 acq[[1]]$meta$heading
+acq[["10"]][["meta"]][["language"]]
+
 acq[[1]]$content
 
+# tidy example
+lm(Volume ~ Girth + Height, trees) |>
+     broom::tidy()
+  
 acq |>
-  tidy() # tidy the list to a tibble
+  tidy()  # tidy the list to a tibble
 
 # matrix ----
 
-library(Matrix)
-
 # cast into a Matrix object
+data("AssociatedPress", package = "topicmodels")
+
 AssociatedPress |>
   tidy() |>
   arrange(-count) |> # or whatever actual analysis you wanted
@@ -38,12 +45,10 @@ AssociatedPress |>
 
 # |  document         | whale | cotillion |
 # |-------------------|-------|-----------|
-# | moby dick         |  91   |      0    |
-# | pride & prejudice |   0   |     76    |
+# | moby dick         |  91   |           |
+# | pride & prejudice |       |     76    |
 # | ...               |   m   |      n    |
 
-data("AssociatedPress", package = "topicmodels")
-?topicmodels::AssociatedPress
 
 dim(AssociatedPress)
 
