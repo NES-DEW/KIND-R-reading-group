@@ -22,6 +22,18 @@ acq[[1]]$content
 acq |>
   tidy() # tidy the list to a tibble
 
+# matrix ----
+
+library(Matrix)
+
+# cast into a Matrix object
+AssociatedPress |>
+  tidy() |>
+  arrange(-count) |> # or whatever actual analysis you wanted
+  slice_max(count, n = 100, with_ties = F) |>
+  cast_sparse(document, term, count)
+
+
 # DTM = document term matrix ----
 
 # |  document         | whale | cotillion |
@@ -63,13 +75,3 @@ inaug_dfm |>
   slice_max(count, n = 100, with_ties = F) |>
   cast_dfm(document, term, count)
 
-# matrix ----
-
-library(Matrix)
-
-# cast into a Matrix object
-AssociatedPress |>
-  tidy() |>
-  arrange(-count) |> # or whatever actual analysis you wanted
-  slice_max(count, n = 100, with_ties = F) |>
-  cast_sparse(document, term, count)
