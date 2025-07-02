@@ -1,0 +1,133 @@
+---
+title: "R reading group notes"
+date: "2024-11-21"
+execute: 
+  echo: true
+output: true
+editor_options: 
+  chunk_output_type: console
+---
+  
+This was about the [vectors chapter in Advanced R (2nd ed)](https://adv-r.hadley.nz/vectors-chap.html). It's mainly about how vectors and lists work.
+
+## Types of vector
+
+There are a few odd extras, but nearly all vectors in the wild can be taxonomised like this:
+
+* atomic vectors (same type)
+  * numeric
+    * integer
+      * `1234L`, `1e4L`, or `0xcafeL`
+    * double
+      * decimal (`0.1234`), scientific (`1.23e4`), hex (`0xcafe`), `Inf`, `-Inf`, and `NaN`
+  * logical
+  * character
+* lists (potentially mixed type)
+* `NULL` (a 0-length vector)
+
+## Scalars and vectors
+
+* scalars = individual values = length-one vectors
+
+```{r}
+"steve" # scalar
+9 # scalar
+length(9)
+
+```
+
+* make longer vectors with `c()`
+
+```{r}
+c(T, FALSE)
+flat <- c(c("nested", "vectors"), c("get", "flattened"))
+flat
+typeof(flat)
+```
+
++ understanding lists vs vectors as largely about hierarchical structure. Vectors are flat, while lists are hierchical:
+
+```{r}
+c(c("this"), c("gets completely"), "flattened")
+list(c("this"), list("gets", "not", "at all"), "flattened")
+```
+
+* we then did a lot of experimenting with empty lists and vectors 
+```{r}
+c("d", 1) == c("d", "1")
+list("c", 1)
+
+## create an empty vector
+vector("character", 0)
+
+## create an empty list
+vector("list", 0) # the weird one
+unlist(vector("list", 0)) # because NULL is effectively a 0-length vector
+is.null(unlist(list()))
+```
+
+
+## Testing for vectors
+
+This is a big issue because many R functions will coerce, and it can cause serious trouble. There's a bit of discussion about the ordering, where character is basically the ground state/most basic, then double, then integer, then logical. So logical only gets made from logical inputs, integer from logical or integer, double from double, or integer, or logical, and character from anything.
+
+```{r}
+as.numeric(TRUE)
+is.logical(TRUE)
+is.integer(1L)
+is.double(1.0)
+is.character("one")
+NA_character_ # if you really want to ruin your life
+
+# character → double → integer → logical
+
+c(T, T) |> typeof()
+c(T, F) |> typeof()
+c(T, 1L) |> typeof()
+c(T, 1) |> typeof()
+
+c(T, NA_character_) |> typeof()
+c(T, 1, NA)
+
+paste(NA_character_)
+paste(NA)
+```
+
+
+### The danger zone
+
+This area is rich in false friends - functions with plausible-sounding names that do something unusual and not entirely what you might expect from their name:
+  
+```{r}
+testy1 <- c(1,2,3)
+testy2 <- list(one = 1, two = 2, three = 3)
+testy3 <- expression(x = 1)
+
+is.vector(testy1) 
+is.vector(testy2) 
+is.vector(testy3) # includes lists and expressions
+
+is.atomic(testy1) 
+is.atomic(testy2)
+is.atomic(testy3)# i.e. not recursive
+
+is.numeric(testy1)
+is.numeric(testy2) # even though everything is numeric, this list doesn't count as numeric
+sapply(testy2, is.numeric)
+```
+
+## Attributes
+Vectors can have attributes - like names. Most attributes are pretty fragile, and get removed very easily:
+
+```{r}
+testy4 <- c(one = 1, two = 2, three = 3)
+typeof(testy4) # definitely not a list
+names(testy4)
+attributes(testy4)
+attr(testy4, "names")
+attr(testy4, "supernames") <- c("one but secret", "two but secret", "three but secret")
+attributes(testy4)
+str(attributes(testy4))
+```
+
+
