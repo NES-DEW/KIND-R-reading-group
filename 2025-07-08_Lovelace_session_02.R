@@ -140,7 +140,10 @@ scottish_cities <- tribble(
 
 scottish_cities |>
   # select(Latitude, Longitude) |>
-  sf_point(x = "Longitude", y = "Latitude")  |> # beware of the non-tidy eval
-  st_set_crs("EPSG:4326") 
-  
+  sf_point(x = "Longitude", y = "Latitude", keep = T)  |> # beware of the non-tidy eval
+  st_set_crs("EPSG:4326") |>
+  ggplot() +
+  geom_sf() +
+  geom_sf_label(aes(label = City))
+
 # return to spherical geometry later??
