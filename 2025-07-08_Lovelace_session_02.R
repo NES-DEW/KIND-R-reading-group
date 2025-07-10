@@ -10,6 +10,7 @@ library(sf) # vectors
 library(terra) # raster
 library(spData)
 library(spDataLarge)
+library(sfheaders)
 
 # vector vs raster ----
 
@@ -28,17 +29,28 @@ library(spDataLarge)
 
 vignette("sf1") # or better https://r-spatial.github.io/sf/articles/sf1.html
 
+# look at the data. Standard tibble plus something new
 world
-spData::world$geom # multipolygon list col. Some countries have islands!
-plot(world) # fast but horrible
+
+# mega-advantage: other than the geom column, a standard tibble
 world |>
+  skimr::skim() 
+
+# multipolygon list col. Some countries have islands!
+spData::world$geom 
+
+plot(world) # fast but horrible
+
+world |>
+  # filter(continent %in% c("Antarctica", "Seven seas (open ocean)")) |>
+  # filter(iso_a2 %in% c("GB", "ES", "DE", "NL", "FR", "BE", "LU", "PT", "IT", "AT", "CH", "IE")) |>
+  # filter(name_long == "Switzerland") |>
   ggplot() +
   geom_sf(aes(fill = continent)) + # easy to ggplot
   theme_void() +
-  theme(legend.position = "bottom")
-
-world |>
-  skimr::skim() # mega-advantage: other than the geom column, a standard tibble
+  theme(legend.position = "bottom") 
+  # xlim(c(-10,18)) +
+  # ylim(c(25, 60))
 
 # that means we can generate mini-maps with a bit of dplyr...
 world |>
@@ -82,7 +94,7 @@ lnd_point <- st_point(c(0.1, 51.5)) # sfg - simple feature geometry - object des
 
 lnd_geom <- st_sfc(lnd_point, crs = "EPSG:4326") # convert the st_point into sfc - simple feature geometry column - by adding a CRS
 
-lnd_attrib = data.frame( # then make non-geographical data in a data.frame/tibble
+lnd_attrib = tibble( # then make non-geographical data in a data.frame/tibble
   name = "London",
   temperature = 25,
   date = as.Date("2023-06-21")
@@ -101,7 +113,19 @@ rbind(c(1, 5), c(4, 4), c(4, 1), c(2, 2), c(3, 2)) |>
 
 matrix(c(1,2,3,45,6,6,34,2,3,4,5,5), ncol = 2, byrow = T) # might be less annoying
 
+# building data from sfheaders ----
+# faster than sf constructors, and independent of them
+v <- c(1,1)
+v_sfg_sfh <- sfheaders::sfg_point(obj = v)
+v_sfg_sfh
 
+# data frames/tibbles
+df <- data.frame(x = 1:4, y = 4:1)
+sfheaders::sfg_polygon(obj = df) # to make an sfc
+sfheaders::sf_polygon(obj = df) # to make an sf
+
+
+# data from rubbish copilot, which thinks that Cumbernauld is a city and doesn't understand how populations work
 scottish_cities <- tribble(
   ~ City,  ~ Latitude,  ~ Longitude,  ~ MeanAvgTempC,  ~ Population, 
   "Glasgow",55.8642,-4.2518,8.5,632350,
@@ -112,6 +136,11 @@ scottish_cities <- tribble(
   "Stirling",56.1165,-3.9369,8.1,37910,
   "Perth",56.3969,-3.4370,8.0,47000,
   "Dunfermline",56.0717,-3.4521,8.2,54990
-) # data from rubbish copilot, which thinks that Cumbernauld is a city and doesn't understand how populations work
+) 
 
-
+scottish_cities |>
+  # select(Latitude, Longitude) |>
+  sf_point(x = "Longitude", y = "Latitude")  |> # beware of the non-tidy eval
+  st_set_crs("EPSG:4326") 
+  
+# return to spherical geometry later??
